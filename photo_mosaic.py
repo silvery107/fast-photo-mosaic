@@ -144,7 +144,7 @@ def get_composite(image,data_list,tiles,pool_cache=None,type=None):
     img_blend = blend_grid(img_hybrid.astype('uint8'),tiles,d=round(min(tiles)*0.2))
     img_feather = feather_image(img_cropped,img_blend,alpha=0.3,mode='global')
 
-    return img_feather.astype('uint8')
+    return img_blend.astype('uint8')
 
 def get_feature(image):
     '''
