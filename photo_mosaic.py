@@ -3,58 +3,29 @@ import cv2
 import numpy as np
 import skimage
 import tqdm
-import photomosaic as pm
 from scipy.spatial import cKDTree
 from skimage import img_as_float
 DATA_pth = "./data/"
 POOL_pth = "./pools/"
-RESIZE_pth = "./data/"
+RESIZE_pth = "./data_aug"
 COM_pth = "./composition/"
 
 # GUI interface method
-def main(target_img_dir,patch_pix,mode=2):
-    name_target = target_img_dir.split(sep='/')[-1]
-    image = cv2.imread(target_img_dir)
-    preprocess_source()
-    dir_pool = None
-    manmade_pth = DATA_pth+"manmade"
-    natural_pth = DATA_pth+"natural"
-    pool = []
-    pool_pth = POOL_pth+"manmade_training_pool.npy"
-    pool_manmade = get_pool(pool_pth)
+def main(target_img_pth,patch_pix,type="manmade"):
+    target_name = target_img_pth.split(sep='/')[-1]
+    img_target = cv2.imread(target_img_pth)
+    # preprocess_source()
+    data_list = None
+    pool = get_pool(type)
+    with open(DATA_pth+type+".txt","r") as f_txt:
+        data_list = f_txt.read().splitlines()
 
-    if mode == 2: # all
-        fname = './data/manmade_training'
-        pool1, dir_pool1 = get_pool_and_dir(fname)
-        
-        fname = './data/natural_training'
-        pool2, dir_pool2 = get_pool_and_dir(fname)
-
-        pool = np.concatenate((pool1,pool2),axis=0)
-        dir_pool = dir_pool1+dir_pool2
-
-    elif mode == 1: # manmade
-        pool_pth = POOL_pth+"manmade_training_pool.npy"
-        pool = get_pool(pool_pth)
-
-    elif mode == 0: # natural
-        pool_pth = POOL_pth+"natural_training_pool.npy"
-        pool = get_pool(pool_pth)
-
-    img_composited = get_composite(image,dir_pool,patch_pix,pool)
-    cv2.imwrite('./composition/mosaic_'+name_target,img_composited)
+    img_composited = get_composite(img_target,data_list,patch_pix,pool)
+    cv2.imwrite(COM_pth+"mosaic_"+target_name,img_composited)
 
 # preprocessing source images methods
-def get_pool_and_dir(fname):
-    pool = get_pool(fname)
-    cut_name = fname.split(sep='/')[-1]
-    with open('resize_'+cut_name+'.txt') as manmade_training:
-        dir_pool = manmade_training.read().splitlines()
-    return pool, dir_pool
-
-def preprocess_source():
-    resize_source('./data/manmade_training','./data/resize_manmade_training')
-    resize_source('./data/natural_training','./data/resize_natural_training')
+def data_augmentation(type):
+    resize_source(os.path.join(DATA_pth,type),os.path.join(RESIZE_pth,type),multicrop=True)
 
 def resize_source(src_path,dst_path,multicrop=False):
     '''
@@ -64,65 +35,73 @@ def resize_source(src_path,dst_path,multicrop=False):
     '''
     if not os.path.exists(dst_path):
         os.mkdir(dst_path)
-        with open(src_path+'.txt') as dir_txt:
+        with open(src_path+'.txt','r') as dir_txt:
             sources = dir_txt.read().splitlines()
-        file_resize_image = open(dst_path+'.txt','w')
-        tq_src_path = tqdm.tqdm(sources,desc='resizing sources')
-        for image in tq_src_path:
-            filename = image.split(sep='/')[1]
-            img = cv2.imread(src_path+'/'+filename)
-            if not multicrop:
-                img = cv2.resize(img,(256,256),interpolation=cv2.INTER_AREA)
-                cv2.imwrite(dst_path+'/'+filename,img)
-                file_resize_image.write(dst_path+'/'+filename+'\n')
-            else:
-                img = cv2.resize(img,(384,384),interpolation=cv2.INTER_AREA)
-                img_sub1 = img[:256,:256]
-                img_sub2 = img[:256,128:]
-                img_sub3 = img[128:,:256]
-                img_sub4 = img[128:,128:]
-                img_set = [img_sub1,img_sub2,img_sub3,img_sub4]
-                for i in range(4):
-                    cv2.imwrite(dst_path+'/'+filename+'_sub'+str(i)+'.jpg',img_set[i])
-                    file_resize_image.write(dst_path+'/'+filename+'\n')
 
-        file_resize_image.close()
+        f_resize_image = open(dst_path+'.txt','w+')
+        for root,_,files in os.walk(src_path):
+            tq_src_path = tqdm.tqdm(files,desc='resizing sources')
+            for file in tq_src_path:
+                filename = os.path.join(root,file)
+                img = cv2.imread(filename)
+                if not multicrop:
+                    img = cv2.resize(img,(256,256),interpolation=cv2.INTER_AREA)
+                    cv2.imwrite(dst_path+'/'+file,img)
+                    f_resize_image.write(dst_path+'/'+file+'\n')
+                else:
+                    name = file.split(sep=".")[0]
+                    img = cv2.resize(img,(384,384),interpolation=cv2.INTER_AREA)
+                    img_sub1 = img[:256,:256]
+                    img_sub2 = img[:256,128:]
+                    img_sub3 = img[128:,:256]
+                    img_sub4 = img[128:,128:]
+                    img_set = [img_sub1,img_sub2,img_sub3,img_sub4]
+                    for i in range(4):
+                        cv2.imwrite(dst_path+'/'+name+'_sub'+str(i)+'.jpg',img_set[i])
+                        f_resize_image.write(dst_path+'/'+name+'_sub'+str(i)+'.jpg\n')
 
-def get_pool(dir_pool):
-    folder = dir_pool.split(sep='/')[-1]
-    pool_file_name = folder+'_pool.npy'
-    with open(dir_pool+'.txt') as sources:
-        img_list = sources.read().splitlines()
+        f_resize_image.close()
 
-    if not os.path.isfile(pool_file_name):
+def get_pool(type):
+    data_pth = DATA_pth+type
+    pool_npy_name = POOL_pth+type+'_pool.npy'
+    if not os.path.isfile(pool_npy_name):
         pool = []
-        length = len(img_list)
-        assert length>0
-        for i in tqdm.trange(length,desc='making pool'):
-            filename = img_list[i].split(sep='/')[-1]
-            img = cv2.cvtColor(cv2.imread('./data/resize_'+folder+'/'+filename),cv2.COLOR_BGR2RGB)
-            img_formated = format_image(img)
-            feature = get_feature(img_formated)
-            pool.append(feature)
-        np.save(pool_file_name,pool)
-
+        data_list = []
+        for root,_,files in os.walk(data_pth):
+            length = len(files)
+            assert length > 0
+            files_tq = tqdm.tqdm(files,desc='making pool')
+            for file in files_tq:
+                filename = os.path.join(root,file)
+                img = cv2.cvtColor(cv2.imread(filename),cv2.COLOR_BGR2RGB)
+                img = cv2.resize(img,(256,256),interpolation=cv2.INTER_AREA)
+                img_formated = format_image(img)
+                feature = get_feature(img_formated)
+                pool.append(feature)
+                data_list.append(filename)
+        np.save(pool_npy_name,pool)
+        with open(os.path.join(DATA_pth,type+".txt"),"w+") as f_txt:
+            f_txt.writelines("\n".join(data_list))
+        print("\ndone")
     else:
-        pool = np.load(pool_file_name)
+        pool = np.load(pool_npy_name)
 
     return pool
 
 # compositing method
-def get_composite(image,dir_pool,tiles,pool_cache=None):
+def get_composite(image,data_list,tiles,pool_cache=None,type=None):
     '''
     Get composite image, use the pre-generated pool will speed up composition
     ---
     image   : (m,n,c) ndarray, BGR image
-    dir_pool: (k,) list of str, directories
+    data_list: (k,) list, path of src images
     tiles   : (a,b) tuple, size of mosaic patches
     pool_cache: (k,48) list, features if pool has already generated
     ---
     return: img_composite,pool
     '''
+    assert len(data_list)>0
     tile_h,tile_w = tiles
     img_h,img_w,channels = image.shape
     img_size = np.array(image.shape[:2])
@@ -148,7 +127,7 @@ def get_composite(image,dir_pool,tiles,pool_cache=None):
     if pool_cache is not None:
         pool = pool_cache
     else:
-        pool = get_pool(dir_pool)
+        pool = get_pool(type)
     # create hybrid image
     img_hybrid = np.zeros_like(img_filted)
     # match tiles
@@ -158,7 +137,7 @@ def get_composite(image,dir_pool,tiles,pool_cache=None):
             temp = img_filted[x:x+tile_h,y:y+tile_w]
             feature = get_feature(temp)
             k_index = kd_match(feature)
-            sample = cv2.imread(dir_pool[k_index])
+            sample = cv2.imread(data_list[k_index])
             sample = cv2.resize(sample,(tile_w,tile_h),interpolation=cv2.INTER_AREA)
             img_hybrid[x:x+tile_h,y:y+tile_w] =sample.astype('float32')
 
@@ -272,26 +251,12 @@ def kd_matcher(data):
 
     return match
 
-def pm_test(img_target,dir_pool,grid_dims,depth=1):
-    image = pm.imread(img_target)
-    pool = pm.make_pool(dir_pool)
-    image = img_as_float(image)
-    converted_img = pm.perceptual(image) # change color space
-    scaled_img = pm.rescale_commensurate(converted_img, grid_dims=grid_dims, depth=depth)
-    tiles = pm.partition(scaled_img, grid_dims=grid_dims, depth=depth)
-    tile_colors = [np.mean(scaled_img[tile].reshape(-1,image.shape[-1]), 0) for tile in tiles]
-    match = pm.simple_matcher(pool) # kd tree
-    matches = [match(tc) for tc in tile_colors]
-    canvas = np.ones_like(scaled_img)  # white canvas
-    mos = pm.draw_mosaic(canvas, tiles, matches)
-
-    return mos
-
 if __name__ == '__main__':
-    # from pycallgraph import PyCallGraph
-    # from pycallgraph.output import GraphvizOutput
-    # with PyCallGraph(output=GraphvizOutput()):
-        target_img_dir = 'mosaic_target1.jpg'
+    from pycallgraph import PyCallGraph
+    from pycallgraph.output import GraphvizOutput
+    
+    with PyCallGraph(output=GraphvizOutput()):
+        target_img_dir = './composition/target1.jpg'
         patch_pix = (32,32) # note that each values should be integer multiply of 8
-        mode = 2
-        main(target_img_dir,patch_pix,mode)
+        type = "manmade"
+        main(target_img_dir,patch_pix,type)
