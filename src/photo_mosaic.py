@@ -6,10 +6,10 @@ import tqdm
 import photomosaic as pm
 from scipy.spatial import cKDTree
 from skimage import img_as_float
-dir_data = "./data/"
-dir_pool = "./pools/"
-dir_resize = "./data/"
-dir_com = "./composition/"
+DATA_pth = "./data/"
+POOL_pth = "./pools/"
+RESIZE_pth = "./data/"
+COM_pth = "./composition/"
 
 # GUI interface method
 def main(target_img_dir,patch_pix,mode=2):
@@ -17,7 +17,12 @@ def main(target_img_dir,patch_pix,mode=2):
     image = cv2.imread(target_img_dir)
     preprocess_source()
     dir_pool = None
-    pool = None
+    manmade_pth = DATA_pth+"manmade"
+    natural_pth = DATA_pth+"natural"
+    pool = []
+    pool_pth = POOL_pth+"manmade_training_pool.npy"
+    pool_manmade = get_pool(pool_pth)
+
     if mode == 2: # all
         fname = './data/manmade_training'
         pool1, dir_pool1 = get_pool_and_dir(fname)
@@ -29,12 +34,12 @@ def main(target_img_dir,patch_pix,mode=2):
         dir_pool = dir_pool1+dir_pool2
 
     elif mode == 1: # manmade
-        fname = './data/manmade_training'
-        pool, dir_pool = get_pool_and_dir(fname)
+        pool_pth = POOL_pth+"manmade_training_pool.npy"
+        pool = get_pool(pool_pth)
 
     elif mode == 0: # natural
-        fname = './data/natural_training'
-        pool, dir_pool = get_pool_and_dir(fname)
+        pool_pth = POOL_pth+"natural_training_pool.npy"
+        pool = get_pool(pool_pth)
 
     img_composited = get_composite(image,dir_pool,patch_pix,pool)
     cv2.imwrite('./composition/mosaic_'+name_target,img_composited)
@@ -51,7 +56,7 @@ def preprocess_source():
     resize_source('./data/manmade_training','./data/resize_manmade_training')
     resize_source('./data/natural_training','./data/resize_natural_training')
 
-def resize_source(dir_path,dst_path,multicrop=False):
+def resize_source(src_path,dst_path,multicrop=False):
     '''
     Resize and crop images in 'dir_path' to 256*256,
     and create a txt file contained their pathes.
@@ -59,13 +64,13 @@ def resize_source(dir_path,dst_path,multicrop=False):
     '''
     if not os.path.exists(dst_path):
         os.mkdir(dst_path)
-        with open(dir_path+'.txt') as dir_txt:
+        with open(src_path+'.txt') as dir_txt:
             sources = dir_txt.read().splitlines()
         file_resize_image = open(dst_path+'.txt','w')
-        tq_dir_path = tqdm.tqdm(sources,desc='resizing sources')
-        for image in tq_dir_path:
+        tq_src_path = tqdm.tqdm(sources,desc='resizing sources')
+        for image in tq_src_path:
             filename = image.split(sep='/')[1]
-            img = cv2.imread(dir_path+'/'+filename)
+            img = cv2.imread(src_path+'/'+filename)
             if not multicrop:
                 img = cv2.resize(img,(256,256),interpolation=cv2.INTER_AREA)
                 cv2.imwrite(dst_path+'/'+filename,img)
