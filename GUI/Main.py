@@ -15,9 +15,9 @@ from Mode_A_Result import Ui_ModeAResultWindow
 from Mode_C import Ui_ModeCWindow
 from Mode_C_Result import Ui_ModeCResultWindow
 
-from predict import *
-from partA import *
-
+sys.path.append("..")
+from photo_mosaic import *
+# from predict import *
 cost_time = 0
 accuracy = 0
 total_classified_image_number = 0
