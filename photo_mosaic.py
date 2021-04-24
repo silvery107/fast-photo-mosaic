@@ -7,7 +7,7 @@ from scipy.spatial import cKDTree
 from skimage import img_as_float
 DATA_pth = "./data/"
 POOL_pth = "./pools/"
-RESIZE_pth = "./data_aug"
+RESIZE_pth = "./data_aug/"
 COM_pth = "./composition/"
 
 # GUI interface method
