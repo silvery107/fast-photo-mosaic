@@ -25,9 +25,11 @@ def main(target_img_pth,patch_pix,type="manmade"):
 
 # preprocessing source images methods
 def data_augmentation(type):
+    global DATA_pth
     if not os.path.exists(RESIZE_pth):
         os.mkdir(RESIZE_pth)
     resize_source(os.path.join(DATA_pth,type),os.path.join(RESIZE_pth,type),multicrop=True)
+    DATA_pth = RESIZE_pth
 
 def resize_source(src_path,dst_path,multicrop=False):
     '''
