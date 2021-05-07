@@ -4,15 +4,15 @@ For more details, please check `quick_start.ipynb`
 
 <img src=./images/composite1.png width=300>
 
-<img src=./images/target1.jpg width=300>
-
-<img src=./images/composite3.png width=300>
-
-<img src=./images/target2.jpg width=300>
+<img src=./images/target1.jpg width=300 style='float:right'>
 
 <img src=./images/composite2.png width=300>
 
-<img src=./images/target3.jpg width=300>
+<img src=./images/target2.jpg width=300 style='float:right'>
+
+<img src=./images/composite3.png width=300>
+
+<img src=./images/target3.jpg width=300 style='float:right'>
 
 ## Call Graph
 
