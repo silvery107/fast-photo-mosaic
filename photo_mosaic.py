@@ -11,25 +11,40 @@ RESIZE_pth = "./data_aug/"
 COM_pth = "./composition/"
 
 # GUI interface method
-def main(target_img_pth,patch_pix,type="manmade"):
+def main(target_img_pth, patch_pix, types=["manmade","natural"]):
     target_name = target_img_pth.split(sep='/')[-1]
     img_target = cv2.imread(target_img_pth)
-    # preprocess_source()
-    data_list = None
-    pool = get_pool(type)
-    with open(DATA_pth+type+".txt","r") as f_txt:
-        data_list = f_txt.read().splitlines()
+    data_list = []
+    pool_list = []
 
-    img_composited = get_composite(img_target,data_list,patch_pix,pool)
+    assert types is not None
+    for type in types:
+        with open(DATA_pth+type+".txt","r") as f_txt:
+            temp_list = f_txt.read().splitlines()
+        pool_list.append(get_pool(type))
+        data_list.append(temp_list)
+
+    pool = np.vstack(pool_list)
+    data = np.hstack(data_list)
+
+    img_composited = get_composite(img_target,data,patch_pix,pool)
     cv2.imwrite(COM_pth+"mosaic_"+target_name,img_composited)
+    return img_composited
 
 # preprocessing source images methods
 def data_augmentation(type):
-    global DATA_pth
-    if not os.path.exists(RESIZE_pth):
-        os.mkdir(RESIZE_pth)
-    resize_source(os.path.join(DATA_pth,type),os.path.join(RESIZE_pth,type),multicrop=True)
+    global DATA_pth,POOL_pth
     DATA_pth = RESIZE_pth
+    POOL_pth = RESIZE_pth+"pools/"
+
+    if not os.path.exists(DATA_pth):
+        os.mkdir(DATA_pth)
+    resize_source(os.path.join(DATA_pth,type),os.path.join(RESIZE_pth,type),multicrop=True)
+    
+    if not os.path.exists(POOL_pth):
+        os.mkdir(POOL_pth)
+
+    get_pool(type)
 
 def resize_source(src_path,dst_path,multicrop=False):
     '''
@@ -145,10 +160,11 @@ def get_composite(image,data_list,tiles,pool_cache=None,type=None):
             sample = cv2.resize(sample,(tile_w,tile_h),interpolation=cv2.INTER_AREA)
             img_hybrid[x:x+tile_h,y:y+tile_w] =sample.astype('float32')
 
+    print("\ndone")
     img_blend = blend_grid(img_hybrid.astype('uint8'),tiles,d=round(min(tiles)*0.2))
     img_feather = feather_image(img_cropped,img_blend,alpha=0.3,mode='global')
 
-    return img_blend.astype('uint8')
+    return img_feather.astype('uint8')
 
 def get_feature(image):
     '''
