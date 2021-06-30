@@ -3,7 +3,7 @@ In this work, I implemented a photo mosaic algorithm based on feature matching.
 I designed a feature descriptor based on the mean histogram of the LAB color space, applied the K-D tree to match the color blocks of the target image sub-region, and used the pre-computed feature pool to optimize the synthesis speed, and realized the mosaic photo that has better performance than Foto-Mosaik-Edda software.
 
 ## Quick Start
-1. Check out this repository and download our source code
+1. Check out this repository and download the source code
 
     `git clone git@github.com:silvery107/fast-photo-mosaic.git`
 
