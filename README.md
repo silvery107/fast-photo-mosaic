@@ -1,5 +1,26 @@
 # Fast Photo Mosaic
-For more details, please check `quick_start.ipynb`
+In this work, I developed a photo mosaic algorithm based on feature matching.
+I designed a feature descriptor based on the mean histogram of the LAB color space, applied the K-D tree to match the color blocks of the target image sub-region, and used the pre-computed feature pool to optimize the synthesis speed, and realized the mosaic photo that has better performance than Foto-Mosaik-Edda software.
+
+## Quick Start
+1. Check out this repository and download our source code
+
+    `git clone git@github.com:silvery107/fast-photo-mosaic.git`
+
+2. Install the required python modules
+
+    `pip install -r requirements.txt`
+
+3. Start photo mosaic by `import photo_mosaic` and calling `mosaic(tgt_img_pth, tiles, types)` 
+
+    `tgt_img_pth :` Directory path of target image.
+
+    `tiles :` The resolution of mosaic elements, and each values should be an **integer multiply of 8**.
+
+    `types : `Currently it support **two types**, *natural* and *manmade*, you can add new image types under `data/<your type>` with corresponding `<your type>.txt` description file.
+
+* For more usage details, please check `quick_start.ipynb`
+
 ## Composited Image Gallery
 <p float="left">
   <img src=./images/composite1.png width="300" />

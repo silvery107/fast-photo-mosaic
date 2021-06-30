@@ -11,9 +11,9 @@ RESIZE_pth = "./data_aug/"
 COM_pth = "./composition/"
 
 # GUI interface method
-def main(target_img_pth, patch_pix, types=["manmade","natural"]):
-    target_name = target_img_pth.split(sep='/')[-1]
-    img_target = cv2.imread(target_img_pth)
+def mosaic(tgt_img_pth, patch_pix, types=["manmade","natural"]):
+    target_name = tgt_img_pth.split(sep='/')[-1]
+    img_target = cv2.imread(tgt_img_pth)
     data_list = []
     pool_list = []
 
@@ -21,6 +21,7 @@ def main(target_img_pth, patch_pix, types=["manmade","natural"]):
     for type in types:
         with open(DATA_pth+type+".txt","r") as f_txt:
             temp_list = f_txt.read().splitlines()
+            
         pool_list.append(get_pool(type))
         data_list.append(temp_list)
 
@@ -39,6 +40,7 @@ def data_augmentation(type):
 
     if not os.path.exists(DATA_pth):
         os.mkdir(DATA_pth)
+
     resize_source(os.path.join(DATA_pth,type),os.path.join(RESIZE_pth,type),multicrop=True)
     
     if not os.path.exists(POOL_pth):
@@ -113,10 +115,10 @@ def get_composite(image,data_list,tiles,pool_cache=None,type=None):
     '''
     Get composite image, use the pre-generated pool will speed up composition
     ---
-    image   : (m,n,c) ndarray, BGR image
-    data_list: (k,) list, path of src images
-    tiles   : (a,b) tuple, size of mosaic patches
-    pool_cache: (k,48) list, features if pool has already generated
+    image       : (m,n,c) ndarray, BGR image
+    data_list   : (k,) list, path of src images
+    tiles       : (a,b) tuple, size of mosaic patches
+    pool_cache  : (k,48) list, features if pool has already generated
     ---
     return: img_composite,pool
     '''
@@ -279,4 +281,4 @@ if __name__ == '__main__':
         target_img_dir = './composition/target1.jpg'
         patch_pix = (32,32) # note that each values should be integer multiply of 8
         type = "manmade"
-        main(target_img_dir,patch_pix,type)
+        mosaic(target_img_dir,patch_pix,type)

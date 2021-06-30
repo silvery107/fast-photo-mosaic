@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from partA import *
+from photo_mosaic import *
 
 with open('./manmade_training.txt') as manmade_training:
     dir_manmade = manmade_training.read().splitlines()
