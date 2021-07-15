@@ -41,6 +41,3 @@ I designed a feature descriptor based on the mean histogram of the LAB color spa
 ## Call Graph
 
 <img src=./images/pycallgraph_v1.png width=600>
-
-## TODO
-- Fix GUI
