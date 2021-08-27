@@ -20,7 +20,7 @@ I designed a feature descriptor based on the mean histogram of the LAB color spa
 | types | Currently it support **two types**, natural and manmade, you can add new image types under `data/<your_type>` with corresponding `<your_type>.txt` description file. |
 
 
-* For more usage details, please check `quick_start.ipynb`
+* For more usage details, please check `quick_start.py`
 
 ## Composited Image Gallery
 <p float="left">
