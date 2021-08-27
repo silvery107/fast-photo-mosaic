@@ -13,11 +13,12 @@ I designed a feature descriptor based on the mean histogram of the LAB color spa
 
 3. Start photo mosaic by `import photo_mosaic` and calling `mosaic(tgt_img_pth, tiles, types)` 
 
-    `tgt_img_pth :` Directory path of target image.
+| Parameter | Description |
+|:---|:---|
+| tgt_img_pth | Directory path of target image. |
+| tiles | The resolution of mosaic elements, and each values should be an **integer multiply of 8**. |
+| types | Currently it support **two types**, natural and manmade, you can add new image types under `data/<your_type>` with corresponding `<your_type>.txt` description file. |
 
-    `tiles :` The resolution of mosaic elements, and each values should be an **integer multiply of 8**.
-
-    `types : `Currently it support **two types**, *natural* and *manmade*, you can add new image types under `data/<your type>` with corresponding `<your type>.txt` description file.
 
 * For more usage details, please check `quick_start.ipynb`
 
